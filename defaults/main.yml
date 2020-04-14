@@ -1,0 +1,11 @@
+---
+prometheus:
+  config:
+    mysqld:
+      version: 0.12.1
+      listen: "{{ ansible_all_ipv4_addresses | ipaddr('private') | first }}"
+      port: 9104
+      path: /metrics
+      host: localhost
+      user: exporter
+      password: "Secur3Pa$S"

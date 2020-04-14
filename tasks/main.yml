@@ -1,0 +1,39 @@
+---
+- name: Download Prometheus exporter from Github
+  get_url:
+    url: https://github.com/prometheus/mysqld_exporter/releases/download/v{{ prometheus.config.mysqld.version }}/mysqld_exporter-{{ prometheus.config.mysqld.version }}.linux-amd64.tar.gz
+    dest: /tmp/mysqld_exporter-{{ prometheus.config.mysqld.version }}.linux-amd64.tar.gz
+
+- name: Extract Prometheus exporter tar.gz file
+  unarchive:
+    src: /tmp/mysqld_exporter-{{ prometheus.config.mysqld.version }}.linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: Add Prometheus User
+  user:
+    name: prometheus
+    state: present
+    create_home: no
+    system: yes
+    password: "*"
+    shell: /usr/sbin/nologin
+
+- name: Copy binary
+  copy:
+    src: "/tmp/mysqld_exporter-{{ prometheus.config.mysqld.version }}.linux-amd64/mysqld_exporter"
+    dest: /usr/bin/mysqld_exporter
+    owner: prometheus
+    mode: '0744'
+    remote_src: yes
+
+- name: Create Prometheus mysqld exporter systemd drop-in
+  template:
+    src: mysqld_exporter.j2
+    dest: "/etc/default/mysqld_exporter"
+
+- name: Create Prometheus mysqld exporter systemd unit
+  copy:
+    src: mysqld_exporter.service
+    dest: "/etc/systemd/system/mysqld_exporter.service"
+  notify: Restart mysqld_exporter
